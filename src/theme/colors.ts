@@ -1,0 +1,11 @@
+export const colors = {
+  spaceDeep: '#05061a',
+  spaceMid: '#0b1030',
+  spaceNebula: '#1a1240',
+  star: '#ffffff',
+  accent: '#5ee7ff',
+  accentWarm: '#ffb454',
+  textPrimary: '#f4f6ff',
+  textMuted: '#8891c4',
+  buttonDisabled: '#2a2f52',
+} as const;
