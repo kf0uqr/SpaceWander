@@ -16,6 +16,7 @@ const CANVAS_HEIGHT = 900;
 type WorldMapScreenProps = {
   save: SaveGame;
   onTravel: (worldId: string) => void;
+  onEnterWorld: (worldId: string) => void;
   onBackToTitle: () => void;
 };
 
@@ -33,7 +34,7 @@ function connectorPairs() {
   return pairs;
 }
 
-export function WorldMapScreen({ save, onTravel, onBackToTitle }: WorldMapScreenProps) {
+export function WorldMapScreen({ save, onTravel, onEnterWorld, onBackToTitle }: WorldMapScreenProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [selectedWorldId, setSelectedWorldId] = useState<string>(save.currentWorldId);
   const pairs = useMemo(connectorPairs, []);
@@ -116,9 +117,11 @@ export function WorldMapScreen({ save, onTravel, onBackToTitle }: WorldMapScreen
           </Text>
           <View style={styles.detailFooter}>
             <MenuButton
-              label={selectedStatus === 'current' ? 'Here' : 'Travel'}
-              onPress={() => onTravel(selectedWorld.id)}
-              disabled={selectedStatus !== 'unlocked'}
+              label={selectedStatus === 'current' ? 'Enter' : 'Travel'}
+              onPress={() =>
+                selectedStatus === 'current' ? onEnterWorld(selectedWorld.id) : onTravel(selectedWorld.id)
+              }
+              disabled={selectedStatus === 'locked'}
             />
           </View>
         </View>

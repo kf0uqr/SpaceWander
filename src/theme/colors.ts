@@ -12,4 +12,13 @@ export const colors = {
   nodeUnlocked: '#5ee7ff',
   nodeLocked: '#3a4070',
   connector: '#2a3160',
+  dustGround: '#8a6f4f',
+  dustGroundDark: '#6e5638',
+  dustSpeck: '#5c4830',
+  spaceport: '#5b6b7a',
+  hall: '#c98a3f',
+  shop: '#3f7a6b',
+  house: '#7a5a4a',
+  exitZone: '#c9a86b',
+  player: '#ffe9a8',
 } as const;
