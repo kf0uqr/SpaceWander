@@ -40,10 +40,24 @@ export default function App() {
       character,
       currentWorldId: startingWorldId,
       visitedWorldIds: [startingWorldId],
+      acceptedMissionIds: [],
     };
     writeSaveGame(save);
     setActiveSave(save);
     setScreen('settlement');
+  }, []);
+
+  const handleAcceptMission = useCallback((missionId: string) => {
+    setActiveSave((current) => {
+      if (!current || current.acceptedMissionIds.includes(missionId)) return current;
+      const next: SaveGame = {
+        ...current,
+        acceptedMissionIds: [...current.acceptedMissionIds, missionId],
+        updatedAt: Date.now(),
+      };
+      writeSaveGame(next);
+      return next;
+    });
   }, []);
 
   const handleTravel = useCallback((worldId: string) => {
@@ -95,6 +109,7 @@ export default function App() {
           settlement={activeSettlement}
           onOpenStarMap={() => setScreen('map')}
           onBackToTitle={goToTitle}
+          onAcceptMission={handleAcceptMission}
         />
       )}
     </SafeAreaProvider>

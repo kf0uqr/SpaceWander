@@ -26,7 +26,7 @@ export const solOutpostSettlement: Settlement = {
       y: 560,
       width: 200,
       height: 160,
-      message: 'No missions posted yet. Check back soon, Captain.',
+      message: 'Notices flutter on the board by the door.',
       solid: true,
     },
     {
@@ -59,7 +59,7 @@ export const solOutpostSettlement: Settlement = {
       y: 800,
       width: 150,
       height: 110,
-      message: 'A few weary travelers nurse their drinks in the dim light. No one has work for you yet.',
+      message: 'A few weary travelers nurse their drinks in the dim light. Old Toma sits in the corner, wringing her hands.',
       solid: true,
     },
     {
@@ -92,7 +92,7 @@ export const solOutpostSettlement: Settlement = {
       y: 800,
       width: 120,
       height: 100,
-      message: 'Faded curtains hang in the window. The cottage sits still and silent.',
+      message: 'Faded curtains hang in the window. Something skitters behind the walls.',
       solid: true,
     },
     {

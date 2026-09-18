@@ -13,11 +13,13 @@ import { MenuButton } from '../components/MenuButton';
 import { DustGround } from '../components/DustGround';
 import { SettlementBuildingView } from '../components/SettlementBuildingView';
 import { PlayerMarker, PLAYER_RADIUS } from '../components/PlayerMarker';
+import { MissionBoard } from '../components/MissionBoard';
 import { colors } from '../theme/colors';
 import { resolveMove, getApproachPoint, Point } from '../lib/collision';
 import { Settlement, SettlementBuilding } from '../data/settlements/types';
 import { SaveGame } from '../lib/saveGame';
 import { getAppearance } from '../data/character/appearance';
+import { getMissionsForWorld } from '../data/missions';
 
 const MOVE_SPEED = 260; // px/sec
 const ARRIVE_THRESHOLD = 4;
@@ -38,9 +40,16 @@ type SettlementScreenProps = {
   settlement: Settlement;
   onOpenStarMap: () => void;
   onBackToTitle: () => void;
+  onAcceptMission: (missionId: string) => void;
 };
 
-export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitle }: SettlementScreenProps) {
+export function SettlementScreen({
+  save,
+  settlement,
+  onOpenStarMap,
+  onBackToTitle,
+  onAcceptMission,
+}: SettlementScreenProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [viewport, setViewport] = useState({
     width: screenWidth,
@@ -48,7 +57,9 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
   });
   const [playerPos, setPlayerPos] = useState<Point>(settlement.playerSpawn);
   const [activeInteraction, setActiveInteraction] = useState<SettlementBuilding | null>(null);
+  const [missionBoardOpen, setMissionBoardOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  const missions = getMissionsForWorld(settlement.worldId);
 
   const playerPosRef = useRef<Point>(settlement.playerSpawn);
   const targetRef = useRef<Point | null>(null);
@@ -61,7 +72,11 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
     .map((building) => ({ x: building.x, y: building.y, width: building.width, height: building.height }));
 
   const triggerInteraction = useCallback((building: SettlementBuilding) => {
-    setActiveInteraction(building);
+    if (building.kind === 'hall') {
+      setMissionBoardOpen(true);
+    } else {
+      setActiveInteraction(building);
+    }
   }, []);
 
   useEffect(() => {
@@ -123,7 +138,7 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
   }
 
   function handleTap(event: GestureResponderEvent) {
-    if (activeInteraction) return;
+    if (activeInteraction || missionBoardOpen) return;
     // pageX/pageY are relative to the full window on both web and native, unlike
     // locationX/locationY which on web are relative to whatever DOM node the tap
     // happened to land on (so its origin shifts per element, not per viewport).
@@ -200,6 +215,15 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
             <MenuButton label="Close" onPress={() => setActiveInteraction(null)} />
           </View>
         </View>
+      )}
+
+      {missionBoardOpen && (
+        <MissionBoard
+          missions={missions}
+          acceptedMissionIds={save.acceptedMissionIds}
+          onAccept={onAcceptMission}
+          onClose={() => setMissionBoardOpen(false)}
+        />
       )}
     </SafeAreaView>
   );

@@ -9,6 +9,7 @@ export type SaveGame = {
   character: CharacterConfig;
   currentWorldId: string;
   visitedWorldIds: string[];
+  acceptedMissionIds: string[];
 };
 
 export async function hasSaveGame(): Promise<boolean> {
@@ -31,6 +32,7 @@ export async function loadSaveGame(): Promise<SaveGame | null> {
       character: parsed.character ?? { ...defaultCharacter(), name: 'Captain' },
       currentWorldId: parsed.currentWorldId ?? '',
       visitedWorldIds: parsed.visitedWorldIds ?? (parsed.currentWorldId ? [parsed.currentWorldId] : []),
+      acceptedMissionIds: parsed.acceptedMissionIds ?? [],
     };
   } catch {
     return null;
