@@ -17,6 +17,7 @@ import { colors } from '../theme/colors';
 import { resolveMove, getApproachPoint, Point } from '../lib/collision';
 import { Settlement, SettlementBuilding } from '../data/settlements/types';
 import { SaveGame } from '../lib/saveGame';
+import { getAppearance } from '../data/character/appearance';
 
 const MOVE_SPEED = 260; // px/sec
 const ARRIVE_THRESHOLD = 4;
@@ -160,7 +161,7 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
       <View style={styles.header}>
         <View>
           <Text style={styles.headerEyebrow}>{settlement.name}</Text>
-          <Text style={styles.headerTitle}>{save.playerName}</Text>
+          <Text style={styles.headerTitle}>{save.character.name}</Text>
         </View>
         <View style={styles.headerButtons}>
           <MenuButton label="Star Map" onPress={onOpenStarMap} variant="secondary" />
@@ -187,7 +188,7 @@ export function SettlementScreen({ save, settlement, onOpenStarMap, onBackToTitl
               height={building.height}
             />
           ))}
-          <PlayerMarker x={playerPos.x} y={playerPos.y} />
+          <PlayerMarker x={playerPos.x} y={playerPos.y} color={getAppearance(save.character.appearanceId)?.color} />
         </View>
       </Pressable>
 

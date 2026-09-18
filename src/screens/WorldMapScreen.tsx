@@ -61,7 +61,7 @@ export function WorldMapScreen({ save, onTravel, onEnterWorld, onBackToTitle }: 
       <View style={styles.header}>
         <View>
           <Text style={styles.headerEyebrow}>Star Chart</Text>
-          <Text style={styles.headerTitle}>{save.playerName}'s Voyage</Text>
+          <Text style={styles.headerTitle}>{save.character.name}'s Voyage</Text>
         </View>
         <MenuButton label="Title" onPress={onBackToTitle} variant="secondary" />
       </View>

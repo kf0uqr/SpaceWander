@@ -3,10 +3,10 @@ import { colors } from '../theme/colors';
 
 export const PLAYER_RADIUS = 14;
 
-export function PlayerMarker({ x, y }: { x: number; y: number }) {
+export function PlayerMarker({ x, y, color }: { x: number; y: number; color?: string }) {
   return (
     <View pointerEvents="none" style={[styles.wrapper, { left: x - PLAYER_RADIUS, top: y - PLAYER_RADIUS }]}>
-      <View style={styles.dot} />
+      <View style={[styles.dot, color && { backgroundColor: color }]} />
       <View style={styles.shadow} />
     </View>
   );

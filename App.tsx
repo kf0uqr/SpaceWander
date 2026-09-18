@@ -6,10 +6,13 @@ import { TitleScreen } from './src/screens/TitleScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WorldMapScreen } from './src/screens/WorldMapScreen';
 import { SettlementScreen } from './src/screens/SettlementScreen';
+import { CharacterCreationScreen } from './src/screens/CharacterCreationScreen';
 import { loadSaveGame, writeSaveGame, SaveGame } from './src/lib/saveGame';
+import { CharacterConfig } from './src/lib/character';
 import { getSettlementForWorld } from './src/data/settlements';
+import { startingWorldId } from './src/data/worlds';
 
-type Screen = 'title' | 'settings' | 'map' | 'settlement';
+type Screen = 'title' | 'settings' | 'map' | 'settlement' | 'characterCreation';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('title');
@@ -25,8 +28,20 @@ export default function App() {
     }
   }, []);
 
-  const handleStartNewGame = useCallback(async () => {
-    const save = await loadSaveGame();
+  const handleStartNewGame = useCallback(() => {
+    setScreen('characterCreation');
+  }, []);
+
+  const handleCharacterCreated = useCallback((character: CharacterConfig) => {
+    const now = Date.now();
+    const save: SaveGame = {
+      createdAt: now,
+      updatedAt: now,
+      character,
+      currentWorldId: startingWorldId,
+      visitedWorldIds: [startingWorldId],
+    };
+    writeSaveGame(save);
     setActiveSave(save);
     setScreen('settlement');
   }, []);
@@ -68,6 +83,9 @@ export default function App() {
         />
       )}
       {screen === 'settings' && <SettingsScreen onBack={goToTitle} />}
+      {screen === 'characterCreation' && (
+        <CharacterCreationScreen onCancel={goToTitle} onComplete={handleCharacterCreated} />
+      )}
       {screen === 'map' && activeSave && (
         <WorldMapScreen save={activeSave} onTravel={handleTravel} onEnterWorld={handleEnterWorld} onBackToTitle={goToTitle} />
       )}
