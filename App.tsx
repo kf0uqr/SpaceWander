@@ -3,8 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TitleScreen } from './src/screens/TitleScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { GameScreen } from './src/screens/GameScreen';
-import { loadSaveGame, SaveGame } from './src/lib/saveGame';
+import { WorldMapScreen } from './src/screens/WorldMapScreen';
+import { loadSaveGame, writeSaveGame, SaveGame } from './src/lib/saveGame';
 
 type Screen = 'title' | 'settings' | 'game';
 
@@ -28,6 +28,22 @@ export default function App() {
     setScreen('game');
   }, []);
 
+  const handleTravel = useCallback((worldId: string) => {
+    setActiveSave((current) => {
+      if (!current || current.currentWorldId === worldId) return current;
+      const next: SaveGame = {
+        ...current,
+        currentWorldId: worldId,
+        visitedWorldIds: current.visitedWorldIds.includes(worldId)
+          ? current.visitedWorldIds
+          : [...current.visitedWorldIds, worldId],
+        updatedAt: Date.now(),
+      };
+      writeSaveGame(next);
+      return next;
+    });
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
@@ -39,7 +55,9 @@ export default function App() {
         />
       )}
       {screen === 'settings' && <SettingsScreen onBack={goToTitle} />}
-      {screen === 'game' && activeSave && <GameScreen save={activeSave} onExit={goToTitle} />}
+      {screen === 'game' && activeSave && (
+        <WorldMapScreen save={activeSave} onTravel={handleTravel} onBackToTitle={goToTitle} />
+      )}
     </SafeAreaProvider>
   );
 }

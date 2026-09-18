@@ -8,4 +8,8 @@ export const colors = {
   textPrimary: '#f4f6ff',
   textMuted: '#8891c4',
   buttonDisabled: '#2a2f52',
+  nodeCurrent: '#ffb454',
+  nodeUnlocked: '#5ee7ff',
+  nodeLocked: '#3a4070',
+  connector: '#2a3160',
 } as const;

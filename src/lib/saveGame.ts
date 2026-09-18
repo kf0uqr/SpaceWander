@@ -7,6 +7,7 @@ export type SaveGame = {
   updatedAt: number;
   playerName: string;
   currentWorldId: string;
+  visitedWorldIds: string[];
 };
 
 export async function hasSaveGame(): Promise<boolean> {
@@ -21,7 +22,15 @@ export async function hasSaveGame(): Promise<boolean> {
 export async function loadSaveGame(): Promise<SaveGame | null> {
   try {
     const raw = await AsyncStorage.getItem(SAVE_KEY);
-    return raw ? (JSON.parse(raw) as SaveGame) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SaveGame>;
+    return {
+      createdAt: parsed.createdAt ?? Date.now(),
+      updatedAt: parsed.updatedAt ?? Date.now(),
+      playerName: parsed.playerName ?? 'Captain',
+      currentWorldId: parsed.currentWorldId ?? '',
+      visitedWorldIds: parsed.visitedWorldIds ?? (parsed.currentWorldId ? [parsed.currentWorldId] : []),
+    };
   } catch {
     return null;
   }

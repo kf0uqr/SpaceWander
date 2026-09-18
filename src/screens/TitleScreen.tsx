@@ -6,6 +6,7 @@ import { MenuButton } from '../components/MenuButton';
 import { Starfield } from '../components/Starfield';
 import { colors } from '../theme/colors';
 import { hasSaveGame, writeSaveGame } from '../lib/saveGame';
+import { startingWorldId } from '../data/worlds';
 
 type TitleScreenProps = {
   onStartNewGame: () => void;
@@ -51,7 +52,8 @@ export function TitleScreen({ onStartNewGame, onContinue, onOpenSettings }: Titl
       createdAt: now,
       updatedAt: now,
       playerName: 'Captain',
-      currentWorldId: 'sol-outpost',
+      currentWorldId: startingWorldId,
+      visitedWorldIds: [startingWorldId],
     }).then(() => {
       setSaveExists(true);
       onStartNewGame();
