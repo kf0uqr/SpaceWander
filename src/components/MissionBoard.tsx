@@ -4,16 +4,37 @@ import { MenuButton } from './MenuButton';
 import { colors } from '../theme/colors';
 import { Mission } from '../data/missions/types';
 
+type MissionStatus = 'available' | 'accepted' | 'completed';
+
 type MissionBoardProps = {
   missions: Mission[];
   acceptedMissionIds: string[];
+  completedMissionIds: string[];
   onAccept: (missionId: string) => void;
   onClose: () => void;
 };
 
-export function MissionBoard({ missions, acceptedMissionIds, onAccept, onClose }: MissionBoardProps) {
+const STATUS_LABEL: Record<MissionStatus, string> = {
+  available: 'Available',
+  accepted: 'Accepted',
+  completed: 'Completed',
+};
+
+export function MissionBoard({
+  missions,
+  acceptedMissionIds,
+  completedMissionIds,
+  onAccept,
+  onClose,
+}: MissionBoardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedMission = missions.find((mission) => mission.id === selectedId) ?? null;
+
+  function statusFor(missionId: string): MissionStatus {
+    if (completedMissionIds.includes(missionId)) return 'completed';
+    if (acceptedMissionIds.includes(missionId)) return 'accepted';
+    return 'available';
+  }
 
   return (
     <View style={styles.overlay}>
@@ -30,14 +51,14 @@ export function MissionBoard({ missions, acceptedMissionIds, onAccept, onClose }
             ) : (
               <View style={styles.list}>
                 {missions.map((mission) => {
-                  const accepted = acceptedMissionIds.includes(mission.id);
+                  const status = statusFor(mission.id);
                   return (
                     <Pressable key={mission.id} style={styles.postCard} onPress={() => setSelectedId(mission.id)}>
                       <View style={styles.postHeader}>
                         <Text style={styles.postTitle}>{mission.title}</Text>
-                        <View style={[styles.badge, accepted && styles.badgeAccepted]}>
-                          <Text style={[styles.badgeText, accepted && styles.badgeTextAccepted]}>
-                            {accepted ? 'Accepted' : 'Available'}
+                        <View style={[styles.badge, status !== 'available' && styles.badgeAccepted]}>
+                          <Text style={[styles.badgeText, status !== 'available' && styles.badgeTextAccepted]}>
+                            {STATUS_LABEL[status]}
                           </Text>
                         </View>
                       </View>
@@ -69,7 +90,9 @@ export function MissionBoard({ missions, acceptedMissionIds, onAccept, onClose }
               </View>
 
               <View style={styles.acceptRow}>
-                {acceptedMissionIds.includes(selectedMission.id) ? (
+                {statusFor(selectedMission.id) === 'completed' ? (
+                  <Text style={styles.acceptedNote}>Mission complete. Thank you, Captain.</Text>
+                ) : statusFor(selectedMission.id) === 'accepted' ? (
                   <Text style={styles.acceptedNote}>You've already accepted this mission.</Text>
                 ) : (
                   <MenuButton label="Accept Mission" onPress={() => onAccept(selectedMission.id)} />

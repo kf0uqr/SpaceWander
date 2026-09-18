@@ -7,16 +7,26 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { WorldMapScreen } from './src/screens/WorldMapScreen';
 import { SettlementScreen } from './src/screens/SettlementScreen';
 import { CharacterCreationScreen } from './src/screens/CharacterCreationScreen';
+import { CombatScreen } from './src/screens/CombatScreen';
 import { loadSaveGame, writeSaveGame, SaveGame } from './src/lib/saveGame';
 import { CharacterConfig } from './src/lib/character';
 import { getSettlementForWorld } from './src/data/settlements';
 import { startingWorldId } from './src/data/worlds';
+import { getMission } from './src/data/missions';
 
-type Screen = 'title' | 'settings' | 'map' | 'settlement' | 'characterCreation';
+type Screen = 'title' | 'settings' | 'map' | 'settlement' | 'characterCreation' | 'combat';
+
+type ActiveCombat = {
+  missionId: string;
+  weaponId: string;
+  enemyId: string;
+  enemyCount: number;
+};
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('title');
   const [activeSave, setActiveSave] = useState<SaveGame | null>(null);
+  const [activeCombat, setActiveCombat] = useState<ActiveCombat | null>(null);
 
   const goToTitle = useCallback(() => setScreen('title'), []);
 
@@ -41,6 +51,8 @@ export default function App() {
       currentWorldId: startingWorldId,
       visitedWorldIds: [startingWorldId],
       acceptedMissionIds: [],
+      completedMissionIds: [],
+      inventory: [],
     };
     writeSaveGame(save);
     setActiveSave(save);
@@ -58,6 +70,50 @@ export default function App() {
       writeSaveGame(next);
       return next;
     });
+  }, []);
+
+  const handleStartCombat = useCallback((missionId: string, grantWeapon: boolean) => {
+    const mission = getMission(missionId);
+    if (!mission?.combatIntro) return;
+    const { weaponId, enemyId, enemyCount } = mission.combatIntro;
+
+    if (grantWeapon) {
+      setActiveSave((current) => {
+        if (!current || current.inventory.includes(weaponId)) return current;
+        const next: SaveGame = {
+          ...current,
+          inventory: [...current.inventory, weaponId],
+          updatedAt: Date.now(),
+        };
+        writeSaveGame(next);
+        return next;
+      });
+    }
+
+    setActiveCombat({ missionId, weaponId, enemyId, enemyCount });
+    setScreen('combat');
+  }, []);
+
+  const handleCombatVictory = useCallback(() => {
+    const missionId = activeCombat?.missionId;
+    setActiveCombat(null);
+    setScreen('settlement');
+    if (!missionId) return;
+    setActiveSave((current) => {
+      if (!current || current.completedMissionIds.includes(missionId)) return current;
+      const next: SaveGame = {
+        ...current,
+        completedMissionIds: [...current.completedMissionIds, missionId],
+        updatedAt: Date.now(),
+      };
+      writeSaveGame(next);
+      return next;
+    });
+  }, [activeCombat]);
+
+  const handleCombatExit = useCallback(() => {
+    setActiveCombat(null);
+    setScreen('settlement');
   }, []);
 
   const handleTravel = useCallback((worldId: string) => {
@@ -110,6 +166,17 @@ export default function App() {
           onOpenStarMap={() => setScreen('map')}
           onBackToTitle={goToTitle}
           onAcceptMission={handleAcceptMission}
+          onStartCombat={handleStartCombat}
+        />
+      )}
+      {screen === 'combat' && activeSave && activeCombat && (
+        <CombatScreen
+          character={activeSave.character}
+          weaponId={activeCombat.weaponId}
+          enemyId={activeCombat.enemyId}
+          enemyCount={activeCombat.enemyCount}
+          onVictory={handleCombatVictory}
+          onExit={handleCombatExit}
         />
       )}
     </SafeAreaProvider>

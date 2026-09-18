@@ -12,5 +12,16 @@ export const solOutpostMissions: Mission[] = [
     giverName: 'Old Toma',
     giverLocation: 'Cantina',
     reward: '50 credits',
+    combatIntro: {
+      dialogue: [
+        "The cantina owner, Gus, wipes down the bar and nods toward Old Toma's corner. \"She's not wrong about the noise. I've heard it myself.\"",
+        '"Sand-lurkers, by the sound of it. Nasty little things, but nothing a steady shot can\'t handle."',
+        'He reaches under the bar and sets a battered pistol on the counter.',
+        '"This old blaster\'s seen better days, but it still shoots true. Take it - clear out her cottage, and it\'s yours to keep."',
+      ],
+      weaponId: 'old-blaster-pistol',
+      enemyId: 'sand-lurker',
+      enemyCount: 3,
+    },
   },
 ];

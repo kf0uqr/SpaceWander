@@ -10,6 +10,8 @@ export type SaveGame = {
   currentWorldId: string;
   visitedWorldIds: string[];
   acceptedMissionIds: string[];
+  completedMissionIds: string[];
+  inventory: string[];
 };
 
 export async function hasSaveGame(): Promise<boolean> {
@@ -33,6 +35,8 @@ export async function loadSaveGame(): Promise<SaveGame | null> {
       currentWorldId: parsed.currentWorldId ?? '',
       visitedWorldIds: parsed.visitedWorldIds ?? (parsed.currentWorldId ? [parsed.currentWorldId] : []),
       acceptedMissionIds: parsed.acceptedMissionIds ?? [],
+      completedMissionIds: parsed.completedMissionIds ?? [],
+      inventory: parsed.inventory ?? [],
     };
   } catch {
     return null;

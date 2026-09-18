@@ -11,4 +11,12 @@ export type Mission = {
   /** Where that person can be found. */
   giverLocation: string;
   reward: string;
+  /** The combat encounter this mission unlocks, reached by talking to the giver in person. */
+  combatIntro?: {
+    /** The giver's lines, shown one at a time before the fight. */
+    dialogue: string[];
+    weaponId: string;
+    enemyId: string;
+    enemyCount: number;
+  };
 };

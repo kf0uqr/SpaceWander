@@ -14,12 +14,13 @@ import { DustGround } from '../components/DustGround';
 import { SettlementBuildingView } from '../components/SettlementBuildingView';
 import { PlayerMarker, PLAYER_RADIUS } from '../components/PlayerMarker';
 import { MissionBoard } from '../components/MissionBoard';
+import { DialogueSequence } from '../components/DialogueSequence';
 import { colors } from '../theme/colors';
 import { resolveMove, getApproachPoint, Point } from '../lib/collision';
 import { Settlement, SettlementBuilding } from '../data/settlements/types';
 import { SaveGame } from '../lib/saveGame';
 import { getAppearance } from '../data/character/appearance';
-import { getMissionsForWorld } from '../data/missions';
+import { getMissionsForWorld, Mission } from '../data/missions';
 
 const MOVE_SPEED = 260; // px/sec
 const ARRIVE_THRESHOLD = 4;
@@ -41,6 +42,7 @@ type SettlementScreenProps = {
   onOpenStarMap: () => void;
   onBackToTitle: () => void;
   onAcceptMission: (missionId: string) => void;
+  onStartCombat: (missionId: string, grantWeapon: boolean) => void;
 };
 
 export function SettlementScreen({
@@ -49,6 +51,7 @@ export function SettlementScreen({
   onOpenStarMap,
   onBackToTitle,
   onAcceptMission,
+  onStartCombat,
 }: SettlementScreenProps) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [viewport, setViewport] = useState({
@@ -56,8 +59,10 @@ export function SettlementScreen({
     height: Math.max(screenHeight - HEADER_HEIGHT, 200),
   });
   const [playerPos, setPlayerPos] = useState<Point>(settlement.playerSpawn);
-  const [activeInteraction, setActiveInteraction] = useState<SettlementBuilding | null>(null);
+  const [activeInteraction, setActiveInteraction] = useState<{ name: string; message: string } | null>(null);
   const [missionBoardOpen, setMissionBoardOpen] = useState(false);
+  const [cantinaMenuMission, setCantinaMenuMission] = useState<Mission | null>(null);
+  const [cantinaDialogueMission, setCantinaDialogueMission] = useState<Mission | null>(null);
   const insets = useSafeAreaInsets();
   const missions = getMissionsForWorld(settlement.worldId);
 
@@ -71,13 +76,44 @@ export function SettlementScreen({
     .filter((building) => building.solid)
     .map((building) => ({ x: building.x, y: building.y, width: building.width, height: building.height }));
 
-  const triggerInteraction = useCallback((building: SettlementBuilding) => {
-    if (building.kind === 'hall') {
-      setMissionBoardOpen(true);
-    } else {
-      setActiveInteraction(building);
-    }
-  }, []);
+  const triggerInteraction = useCallback(
+    (building: SettlementBuilding) => {
+      if (building.kind === 'hall') {
+        setMissionBoardOpen(true);
+        return;
+      }
+
+      const cantinaMission = missions.find(
+        (mission) => mission.combatIntro && mission.giverLocation === building.name,
+      );
+      if (cantinaMission) {
+        const accepted = save.acceptedMissionIds.includes(cantinaMission.id);
+        const completed = save.completedMissionIds.includes(cantinaMission.id);
+        if (completed) {
+          setActiveInteraction({
+            name: building.name,
+            message: `${cantinaMission.giverName} sleeps easy these days. Word around the bar is you're the one to thank.`,
+          });
+          return;
+        }
+        if (accepted) {
+          setCantinaMenuMission(cantinaMission);
+          return;
+        }
+      }
+
+      setActiveInteraction({ name: building.name, message: building.message });
+    },
+    [missions, save.acceptedMissionIds, save.completedMissionIds],
+  );
+
+  // `step` (below) is created once per `settlement` change and calls this
+  // through a ref so it always sees the latest mission/save state instead of
+  // whatever triggerInteraction closure existed when the animation loop mounted.
+  const triggerInteractionRef = useRef(triggerInteraction);
+  useEffect(() => {
+    triggerInteractionRef.current = triggerInteraction;
+  }, [triggerInteraction]);
 
   useEffect(() => {
     playerPosRef.current = settlement.playerSpawn;
@@ -105,7 +141,7 @@ export function SettlementScreen({
           targetRef.current = null;
           const interaction = pendingInteractionRef.current;
           pendingInteractionRef.current = null;
-          if (interaction) triggerInteraction(interaction);
+          if (interaction) triggerInteractionRef.current(interaction);
         } else {
           const moveDist = Math.min(MOVE_SPEED * dt, dist);
           const ux = dx / dist;
@@ -138,7 +174,7 @@ export function SettlementScreen({
   }
 
   function handleTap(event: GestureResponderEvent) {
-    if (activeInteraction || missionBoardOpen) return;
+    if (activeInteraction || missionBoardOpen || cantinaMenuMission || cantinaDialogueMission) return;
     // pageX/pageY are relative to the full window on both web and native, unlike
     // locationX/locationY which on web are relative to whatever DOM node the tap
     // happened to land on (so its origin shifts per element, not per viewport).
@@ -221,8 +257,60 @@ export function SettlementScreen({
         <MissionBoard
           missions={missions}
           acceptedMissionIds={save.acceptedMissionIds}
+          completedMissionIds={save.completedMissionIds}
           onAccept={onAcceptMission}
           onClose={() => setMissionBoardOpen(false)}
+        />
+      )}
+
+      {cantinaMenuMission && (
+        <View style={styles.dialog}>
+          <Text style={styles.dialogTitle}>Cantina</Text>
+          <Text style={styles.dialogBody}>
+            {save.inventory.includes(cantinaMenuMission.combatIntro!.weaponId)
+              ? "You've got Gus's old blaster. Ready to finish the job at Settler Cottage?"
+              : 'Gus is behind the bar, and Old Toma still looks shaken.'}
+          </Text>
+          <View style={styles.dialogFooter}>
+            <View style={styles.footerButton}>
+              <MenuButton label="Leave" onPress={() => setCantinaMenuMission(null)} variant="secondary" />
+            </View>
+            <View style={styles.footerButton}>
+              {save.inventory.includes(cantinaMenuMission.combatIntro!.weaponId) ? (
+                <MenuButton
+                  label="Head to the Cottage"
+                  onPress={() => {
+                    const mission = cantinaMenuMission;
+                    setCantinaMenuMission(null);
+                    onStartCombat(mission.id, false);
+                  }}
+                />
+              ) : (
+                <MenuButton
+                  label="Talk to the Owner"
+                  onPress={() => {
+                    setCantinaDialogueMission(cantinaMenuMission);
+                    setCantinaMenuMission(null);
+                  }}
+                />
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {cantinaDialogueMission && (
+        <DialogueSequence
+          speakerName="Gus — Cantina Owner"
+          lines={cantinaDialogueMission.combatIntro!.dialogue}
+          finishLabel="Take the Blaster"
+          onFinish={() => {
+            const mission = cantinaDialogueMission;
+            setCantinaDialogueMission(null);
+            onStartCombat(mission.id, true);
+          }}
+          cancelLabel="Not Now"
+          onCancel={() => setCantinaDialogueMission(null)}
         />
       )}
     </SafeAreaView>
@@ -293,5 +381,9 @@ const styles = StyleSheet.create({
   },
   dialogFooter: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  footerButton: {
+    flex: 1,
   },
 });
